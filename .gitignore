@@ -1,0 +1,6 @@
+build/
+binbkup/
+*~
+CMakeFiles/
+CMakeCache.txt
+.cache/

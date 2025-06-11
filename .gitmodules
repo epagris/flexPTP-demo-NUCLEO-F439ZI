@@ -1,0 +1,15 @@
+[submodule "Drivers/stm32f4xx-hal-driver"]
+	path = Drivers/stm32f4xx-hal-driver
+	url = https://github.com/STMicroelectronics/stm32f4xx-hal-driver.git
+[submodule "Modules/lwip"]
+	path = Modules/lwip
+	url = https://github.com/lwip-tcpip/lwip.git
+[submodule "Modules/embfmt"]
+	path = Modules/embfmt
+	url = git@epagris.com:epagris/embfmt.git
+[submodule "Modules/flexptp"]
+	path = Modules/flexptp
+	url = git@epagris.com:epagris/flexPTP.git
+[submodule "Modules/etherlib"]
+	path = Modules/etherlib
+	url = git@epagris.com:epagris/EtherLib.git
