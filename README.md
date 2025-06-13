@@ -3,13 +3,13 @@
 <!-- <img src="Modules/flexptp/manual/media/flexPTP_logo.png" alt="flexPTP-logo" width="200">
 <img src="https://www.st.com/bin/ecommerce/api/image.PF266519.en.feature-description-include-personalized-no-cpn-large.jpg" alt="NUCLEO-F439ZI" width="200"> -->
 
-![flexPTP CLI](media/NUCLEO-H743ZI.gif)
+![flexPTP CLI](NUCLEO-H743ZI.gif)
 
 ## What's this?
 
 > **This is a [flexPTP](https://github.com/epagris/flexPTP) demo project showcasing the capabilities of the flexPTP [IEEE 1588 Precision Time Protocol](https://ieeexplore.ieee.org/document/9120376) implementation for the [STMicroelectronics NUCLEO-F439ZI](https://www.st.com/en/evaluation-tools/nucleo-f439zi.html) devboard.**
 
-Still not clear what is it useful for? No worries, it's a behind-the-scenes support technology that you are using unaware every day if you have a smartphone or when you are connected to the internet. Modern telecommunication and measurement systems often rely on precise time synchronization down to the nanoseconds' scale through Ethernet networks. Those methods got standardized by IEEE and now it's known by the name of the Precision Time Protocol. This software project is an evaluation environment to showcase the capabilities of our IEEE 1588 implementation named `flexPTP` on the STMicroelectronics NUCLEO-F439ZI board.
+Still not clear what is it useful for? No worries, it's a behind-the-scenes support technology that use unaware every day if you have a smartphone or when you are connected to the internet. Modern telecommunication and measurement systems often rely on precise time synchronization down to the nanoseconds' scale. Methods got standardized by the IEEE and now it's known by the name of the Precision Time Protocol. This software project is an evaluation environment to showcase the capabilities of our IEEE 1588 PTP implementation named `flexPTP` on the STMicroelectronics NUCLEO-F439ZI board.
 
 > [!TIP]
 >**Just want to try the demo and skip compiling? Download one of the precompiled binaries and jump to [Deploying](#Deploying)!**
@@ -46,7 +46,7 @@ The project is fully CMake managed. Configure and invoke the cross-compiler usin
 cmake . -B build
 cmake --build build --target flexptp-demo --
 ```
-Once the building has concluded the output binaries will be deposited in the `build` directory: `flexptp-demo.elf`, `flexptp-demo.bin`, `flexptp-demo.hex`
+Once the building has concluded the output binaries would be deposited in the `build` directory: `flexptp-demo.elf`, `flexptp-demo.bin`, `flexptp-demo.hex`
 
 ## Deploying
 
@@ -93,7 +93,7 @@ The project is relying on the following large software building blocks:
 - [STM32F4xx Hardware Abstraction Layer library](https://github.com/STMicroelectronics/stm32f4xx-hal-driver) (HAL) providing MCU specific functionality,
 - the [Lightweight IP](https://github.com/lwip-tcpip/lwip) (lwip) Ethernet stack extended with PTP timestamp support,
 - the [EtherLib](https://gitea.epagris.com/epagris/EtherLib), our in-house developed Ethernet stack,
-- the [embfmt](https://gitea.epagris.com/epagris/embfmt) a printf()-like formatted printer implementation for embedded systems,
+- the [embfmt](https://gitea.epagris.com/epagris/embfmt) a printf()-like formatted printer implementation for embedded systems.
 
 > [!TIP]
 > The project can either use LwIP or EtherLib Ethernet stacks. This can be easily changed by setting the `ETH_STACK` CMake variable in the top `CMakeLists.txt`:
@@ -102,7 +102,6 @@ The project is relying on the following large software building blocks:
 >```
 > The development of the EtherLib network stack was motivated in the beginning by just curiosity and our need for something that is suitable for our university research. Gradually it became a handy tool so we've decided to promote it into our public projects as well.
 >
-
 
 The project is organized the following way:
 
@@ -118,14 +117,16 @@ ROOT
     flexptp: our PTP implementation (submodule)
     lwip and lwip_port: the LwIP Ethernet stack and its system dependent module (submodule)
     etherlib: our in-house developed Ethernet stack (submodule)
+      embfmt: a printf()-like formatted printer implementation for embedded systems (submodule)
     blocking_io: a simple blocking FIFO implementation
-    embfmt: a printf()-like formatted printer implementation for embedded systems (submodule)
   Src
     cliutils: CLI-interface implementation
     ethernet: Ethernet stack initialization
 
     cmds.c: custom CLI commands
 ```
+> [!NOTE]
+> The flexPTP parameters are defined in the [flexptp_options.h](Inc/flexptp_options.h) header.
 
 ### Printing and logging
 

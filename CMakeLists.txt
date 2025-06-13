@@ -110,9 +110,6 @@ endif()
 # Add Drivers (HAL and CMSIS)
 add_subdirectory(Drivers)
 
-# Add custom Ethernet driver
-#add_subdirectory(Drivers/EthDrv)
-
 # Add Modules
 add_subdirectory(Modules)
 
