@@ -62,7 +62,7 @@ The [STM32CubeProgrammer](https://www.st.com/en/development-tools/stm32cubeprog.
 
 This tool is part of the open source [stlink-tools](https://github.com/stlink-org/stlink) bundle, that is also available through common Linux package managers.
 
-To program the MCU use the following command: `st-flash write build/flexptp-demo.elf 0x08000000`
+To program the MCU use the following command: `st-flash write build/flexptp-demo.bin 0x08000000`
 
 ### Using the `openocd` application
 
