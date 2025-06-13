@@ -1,4 +1,4 @@
-# STM32 NUCELO-F439ZI flexPTP demo
+# STM32 NUCLEO-F439ZI flexPTP demo
 
 <!-- <img src="Modules/flexptp/manual/media/flexPTP_logo.png" alt="flexPTP-logo" width="200">
 <img src="https://www.st.com/bin/ecommerce/api/image.PF266519.en.feature-description-include-personalized-no-cpn-large.jpg" alt="NUCLEO-F439ZI" width="200"> -->
