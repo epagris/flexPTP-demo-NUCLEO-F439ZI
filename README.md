@@ -81,7 +81,7 @@ The firmware prints its messages to and expect user input coming on the board co
 
 ### PPS signal
 
-The 1PPS signal is emitted on the `PG0` pin.
+The 1PPS signal is emitted on the `PB5` pin.
 
 ## Development
 
