@@ -38,6 +38,7 @@
  * NO_SYS==1: Provides VERY minimal functionality. Otherwise,
  * use lwIP facilities.
  */
+#include <stdint.h>
 #define NO_SYS                  0
 
 /* ---------- Memory options ---------- */
@@ -95,6 +96,9 @@ a lot of data that needs to be copied, this should be set high. */
 #define LWIP_SUPPORT_CUSTOM_PBUF      1
 
 /* --------- Ethernet hooks --------- */
+struct netif;
+struct pbuf;
+extern int8_t hook_unknown_ethertype(struct pbuf *pbuf, struct netif *netif);
 #define LWIP_HOOK_UNKNOWN_ETH_PROTOCOL(pbuf,netif) hook_unknown_ethertype(pbuf,netif)
 
 /* ---------- IPv4 options ---------- */

@@ -21,7 +21,7 @@ Still not clear what is it useful for? No worries, it's a behind-the-scenes supp
 > To acquire the full source tree after cloning the repo, please fetch the linked *submodules* as well:
 
 ```
-git clone https://gitea.epagris.com/epagris/flexPTP-demo-NUCLEO-F439ZI.git
+git clone https://github.com/epagris/flexPTP-demo-NUCLEO-F439ZI
 cd flexPTP-demo-NUCLEO-F439ZI
 git submodule init
 git submodule update
@@ -154,7 +154,7 @@ ptp log {def|corr|ts|info|locked|bmca} {on|off}    Turn on or off logging
 time [ns]                                          Print time
 ptp master [[un]prefer] [clockid]                  Master clock settings
 ptp info                                           Print PTP info
-ptp domain [domain]                                Print or get PTP domain
+ptp domain [domain]                                Print or set PTP domain
 ptp addend [addend]                                Print or set addend
 ptp transport [{ipv4|802.3}]                       Set or get PTP transport layer
 ptp delmech [{e2e|p2p}]                            Set or get PTP delay mechanism
@@ -192,7 +192,7 @@ ptp priority [<p1> <p2>]                           Print or set clock priority f
 
 ## License
 
-The project is created by András Wiesner (Epagris) in 2025 and published under the MIT license. Contributions are welcome! :)
+The project was created by András Wiesner (Epagris) in 2025 and published under the MIT license. Contributions are welcome! :)
 
 
 

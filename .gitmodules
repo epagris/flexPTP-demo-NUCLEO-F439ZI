@@ -6,10 +6,10 @@
 	url = https://github.com/lwip-tcpip/lwip.git
 [submodule "Modules/embfmt"]
 	path = Modules/embfmt
-	url = git@epagris.com:epagris/embfmt.git
+	url = https://gitea.epagris.com/epagris/embfmt
 [submodule "Modules/flexptp"]
 	path = Modules/flexptp
-	url = git@epagris.com:epagris/flexPTP.git
+	url = https://github.com/epagris/flexPTP
 [submodule "Modules/etherlib"]
 	path = Modules/etherlib
-	url = git@epagris.com:epagris/EtherLib.git
+	url = https://gitea.epagris.com/epagris/EtherLib

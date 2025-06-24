@@ -46,7 +46,7 @@
 #include <flexptp/port/example_ports/ptp_port_stm32f407_lwip.h>
 #endif
 
-#define PTP_MAIN_OSCILLATOR_FREQ_HZ (168000000)
+#define PTP_MAIN_OSCILLATOR_FREQ_HZ (180000000)
 #define PTP_INCREMENT_NSEC (6)
 
 #include <stdlib.h>
