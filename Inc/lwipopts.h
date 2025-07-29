@@ -34,12 +34,32 @@
 #ifndef __LWIPOPTS_H__
 #define __LWIPOPTS_H__
 
+#include <cmsis_os2.h>
+
 /**
  * NO_SYS==1: Provides VERY minimal functionality. Otherwise,
  * use lwIP facilities.
  */
 #include <stdint.h>
 #define NO_SYS                  0
+
+/* ---------- Core locking ---------- */
+
+#define LWIP_FREERTOS_CHECK_CORE_LOCKING 1
+#define LWIP_TCPIP_CORE_LOCKING 1
+#define LWIP_FREERTOS_SYS_ARCH_PROTECT_USES_MUTEX 1
+
+void sys_lock_tcpip_core(void);
+#define LOCK_TCPIP_CORE() sys_lock_tcpip_core()
+
+void sys_unlock_tcpip_core(void);
+#define UNLOCK_TCPIP_CORE() sys_unlock_tcpip_core()
+
+void sys_mark_tcpip_thread(void);
+#define LWIP_MARK_TCPIP_THREAD() sys_mark_tcpip_thread()
+
+void sys_check_core_locking(void);
+#define LWIP_ASSERT_CORE_LOCKED() sys_check_core_locking()
 
 /* ---------- Memory options ---------- */
 /* MEM_ALIGNMENT: should be set to the alignment of the CPU for which

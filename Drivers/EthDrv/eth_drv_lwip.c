@@ -55,7 +55,7 @@ static struct netif *if0;
 
 static LinkState linkState = {false, false, 0, false};
 
-static osThreadId_t th;
+static osMessageQueueId_t rx_msg_q;
 
 static void fetch_link_properties() {
     const PHY_LinkStatus *status = phy_get_link_status();
@@ -105,6 +105,9 @@ static void phy_thread(void *arg) {
 /* Forward declarations. */
 static void ethernetif_input(struct netif *netif);
 
+#define RX_MSG_Q_LEN (32)
+static void rx_thread(void *arg);
+
 /**
  * In this function, the hardware should be initialized.
  * Called from ethernetif_init().
@@ -129,16 +132,29 @@ static void low_level_init(struct netif *netif) {
 
     ETHHW_Init(ETH, &opts);
 
+    // -------------------------------------------------------------------
+
+    // create receive event queue
+    rx_msg_q = osMessageQueueNew(RX_MSG_Q_LEN, sizeof(ETHHW_EventDesc), NULL);
+
+    // start receive thread
+    osThreadAttr_t attr;
+    memset(&attr, 0, sizeof(attr));
+    attr.stack_size = 2048;
+    attr.name = "rx";
+    osThreadNew(rx_thread, NULL, &attr);
+
+    // -------------------------------------------------------------------
+
     ETHHW_Start(ETH);
 
     // -------- Process PHY events occured during the initialization phase
 
     // start PHY event processing thread
-    osThreadAttr_t attr;
     memset(&attr, 0, sizeof(attr));
     attr.stack_size = 2048;
     attr.name = "phy";
-    th = osThreadNew(phy_thread, NULL, &attr);
+    osThreadNew(phy_thread, NULL, &attr);
 
     // -------------------------------------------------------------------
 
@@ -238,74 +254,87 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p) {
     return ERR_OK;
 }
 
+static void rx_thread(void *arg) {
+    ETHHW_EventDesc evt;
+
+    while (true) {
+
+        /* get event */
+        if (osMessageQueueGet(rx_msg_q, &evt, NULL, osWaitForever) != osOK) {
+            continue;
+        }
+
+        /* move received packet into a new pbuf */
+        struct pbuf *p, *q;
+        /* We allocate a pbuf chain of pbufs from the pool. */
+        p = pbuf_alloc(PBUF_RAW, evt.data.rx.size, PBUF_POOL);
+
+        if (p != NULL) {
+            /* save size waiting for being stored */
+            u16_t size_left = evt.data.rx.size;
+
+            /* We iterate over the pbuf chain until we have read the entire
+             * packet into the pbuf. */
+            for (q = p; (q != NULL) && (size_left > 0); q = q->next) {
+                /* Read enough bytes to fill this pbuf in the chain. The
+                 * available data in the pbuf is given by the q->len
+                 * variable.
+                 * This does not necessarily have to be a memcpy, you can also preallocate
+                 * pbufs for a DMA-enabled MAC and after receiving truncate it to the
+                 * actually received size. In this case, ensure the tot_len member of the
+                 * pbuf is the sum of the chained pbuf len members.
+                 */
+
+                /* compute copy size and copy */
+                u16_t copy_size = MIN(size_left, q->len);
+                memcpy(q->payload, evt.data.rx.payload, copy_size);
+                size_left -= copy_size;
+            }
+
+            /* Copy the timestamp into the first pbuf */
+            p->time_s = evt.data.rx.ts_s;
+            p->time_ns = evt.data.rx.ts_ns;
+
+            MIB2_STATS_NETIF_ADD(netif, ifinoctets, p->tot_len);
+            if (((u8_t *)p->payload)[0] & 1) {
+                /* broadcast or multicast packet*/
+                MIB2_STATS_NETIF_INC(netif, ifinnucastpkts);
+            } else {
+                /* unicast packet*/
+                MIB2_STATS_NETIF_INC(netif, ifinucastpkts);
+            }
+        } else {
+            LINK_STATS_INC(link.memerr);
+            LINK_STATS_INC(link.drop);
+            MIB2_STATS_NETIF_INC(netif, ifindiscards);
+        }
+
+        /* if no packet could be read, silently ignore this */
+        if (p != NULL) {
+            /* pass all packets to ethernet_input, which decides what packets it supports */
+            if (if0->input(p, if0) != ERR_OK) {
+                LWIP_DEBUGF(NETIF_DEBUG, ("ethernetif_input: IP input error\n"));
+                pbuf_free(p);
+                p = NULL;
+            }
+        }
+
+        /* release the RX descriptors */
+        ETHHW_RestoreRXDesc(evt.bd);
+    }
+}
+
 int ETHHW_ReadCallback(ETHHW_EventDesc *evt) {
     // packet reception
     if (evt->type != ETHHW_EVT_RX_READ) {
         return 0;
     }
 
-    /* return indicator */
-    int ret = 0;
-
-    /* move received packet into a new pbuf */
-    struct pbuf *p, *q;
-    /* We allocate a pbuf chain of pbufs from the pool. */
-    p = pbuf_alloc(PBUF_RAW, evt->data.rx.size, PBUF_POOL);
-
-    if (p != NULL) {
-        /* save size waiting for being stored */
-        u16_t size_left = evt->data.rx.size;
-
-        /* We iterate over the pbuf chain until we have read the entire
-         * packet into the pbuf. */
-        for (q = p; (q != NULL) && (size_left > 0); q = q->next) {
-            /* Read enough bytes to fill this pbuf in the chain. The
-             * available data in the pbuf is given by the q->len
-             * variable.
-             * This does not necessarily have to be a memcpy, you can also preallocate
-             * pbufs for a DMA-enabled MAC and after receiving truncate it to the
-             * actually received size. In this case, ensure the tot_len member of the
-             * pbuf is the sum of the chained pbuf len members.
-             */
-
-            /* compute copy size and copy */
-            u16_t copy_size = MIN(size_left, q->len);
-            memcpy(q->payload, evt->data.rx.payload, copy_size);
-            size_left -= copy_size;
-        }
-
-        /* Copy the timestamp into the first pbuf */
-        p->time_s = evt->data.rx.ts_s;
-        p->time_ns = evt->data.rx.ts_ns;
-
-        MIB2_STATS_NETIF_ADD(netif, ifinoctets, p->tot_len);
-        if (((u8_t *)p->payload)[0] & 1) {
-            /* broadcast or multicast packet*/
-            MIB2_STATS_NETIF_INC(netif, ifinnucastpkts);
-        } else {
-            /* unicast packet*/
-            MIB2_STATS_NETIF_INC(netif, ifinucastpkts);
-        }
-
-        /* packets has been processed and can be released */
-        ret = ETHHW_RET_RX_PROCESSED;
+    if (osMessageQueuePut(rx_msg_q, evt, 0, 0) != osOK) {
+        return ETHHW_RET_RX_PROCESSED; // this frame has been dropped
     } else {
-        LINK_STATS_INC(link.memerr);
-        LINK_STATS_INC(link.drop);
-        MIB2_STATS_NETIF_INC(netif, ifindiscards);
+        return 0; // the buffer will be passed to the processing thread
     }
-
-    /* if no packet could be read, silently ignore this */
-    if (p != NULL) {
-        /* pass all packets to ethernet_input, which decides what packets it supports */
-        if (if0->input(p, if0) != ERR_OK) {
-            LWIP_DEBUGF(NETIF_DEBUG, ("ethernetif_input: IP input error\n"));
-            pbuf_free(p);
-            p = NULL;
-        }
-    }
-
-    return ret;
 }
 
 int ETHHW_EventCallback(ETHHW_EventDesc *evt) {

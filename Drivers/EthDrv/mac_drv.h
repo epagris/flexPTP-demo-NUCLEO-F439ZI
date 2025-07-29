@@ -75,6 +75,7 @@ typedef struct {
             uint32_t ts_ns; // timestamp nanoseconds
         } tx;
     } data;
+    ETHHW_DescFull *bd;     // associated descriptor
 } ETHHW_EventDesc;
 
 #define ETHHW_RET_RX_PROCESSED (1)
@@ -95,14 +96,15 @@ void ETHHW_Start(ETH_TypeDef *eth);
 void ETHHW_Transmit(ETH_TypeDef *eth, const uint8_t *buf, uint16_t len, uint8_t txOpts, void *txOptArgs);
 
 void ETHHW_ProcessRx(ETH_TypeDef *eth);
+void ETHHW_RestoreRXDesc(ETHHW_DescFull *bd);
 
-void ETHHW_SetLinkProperties(ETH_TypeDef * eth, bool fastEthernet, bool fullDuplex);
+void ETHHW_SetLinkProperties(ETH_TypeDef *eth, bool fastEthernet, bool fullDuplex);
 
 void ETHHW_ISR(ETH_TypeDef *eth);
 
 uint32_t ETHHW_ReadPHYRegister(ETH_TypeDef *eth, uint32_t PHYAddr, uint32_t PHYReg, uint32_t *pRegValue);
 uint32_t ETHHW_WritePHYRegister(ETH_TypeDef *eth, uint32_t PHYAddr, uint32_t PHYReg, uint32_t RegValue);
-void ETHHW_ReadErrorState(ETH_TypeDef * eth);
+void ETHHW_ReadErrorState(ETH_TypeDef *eth);
 
 /* ---- PTP CAPABILITIES ---- */
 
@@ -128,7 +130,7 @@ typedef enum {
 void ETHHW_EnablePTPTimeStamping(ETH_TypeDef *eth);                                          // Enable PTP timestamping (currently every frame received gets timestamped)
 void ETHHW_DisablePTPTimeStamping(ETH_TypeDef *eth);                                         // Disable PTP timestamping
 void ETHHW_InitPTPTime(ETH_TypeDef *eth, uint32_t sec, uint32_t nsec);                       // Initialize PTP clock time
-void ETHHW_GetPTPTime(ETH_TypeDef *eth, uint32_t *sec, uint32_t *nsec);                   // Get PTP clock time
+void ETHHW_GetPTPTime(ETH_TypeDef *eth, uint32_t *sec, uint32_t *nsec);                      // Get PTP clock time
 void ETHHW_EnablePTPFineCorr(ETH_TypeDef *eth, bool enFineCorr);                             // Enable fine correction method
 void ETHHW_UpdatePTPTime(ETH_TypeDef *eth, uint32_t sec, uint32_t nsec, bool add_substract); // Update PTP time forward or backward by a given value
 void ETHHW_SetPTPAddend(ETH_TypeDef *eth, uint32_t addend);                                  // Set PTP addend

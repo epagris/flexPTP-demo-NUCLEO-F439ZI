@@ -237,11 +237,11 @@ ETHHW_DescFull *ETHHW_AdvanceDesc(ETHHW_DescFull *start, uint16_t n, ETHHW_DescF
 #define ETHHW_DESC_PREV(s, n, p) ETHHW_AdvanceDesc((s), (n), (p), -1)
 #define ETHHW_DESC_NEXT(s, n, p) ETHHW_AdvanceDesc((s), (n), (p), 1)
 
-// TODO: csak az OWN bitet kell visszakapcsolni és esetleg a CTRL-t állítani
-// static void ETHHW_RestoreRXDesc(ETHHW_DescFull *bd) {
-//     bd->desc.DES0 = bd->ext.bufAddr;                                                          // store Buffer 1 address
-//     bd->desc.DES3 = 0 | ETH_DMARXNDESCRF_OWN | ETH_DMARXNDESCRF_IOC | ETH_DMARXNDESCRF_BUF1V; // set flags: OWN, IOC, BUF1V
-// }
+void ETHHW_RestoreRXDesc(ETHHW_DescFull *bd) {
+    if (bd != NULL) {
+        SET_BIT(bd->desc.DES0, ETH_DMARXDESC_OWN); // set the OWN bit
+    }
+}
 
 #if DEBUG_RINGBUF
 typedef enum {
@@ -377,6 +377,7 @@ void ETHHW_ProcessRx(ETH_TypeDef *eth) {
         evt.type = ETHHW_EVT_RX_READ;
         evt.data.rx.size = (bd->desc.DES0 >> 16) & 0x3FFF; // get received frame length
         evt.data.rx.payload = (void *)bd->ext.bufAddr;     // pass payload to the upper layers
+        evt.bd = bd;
 
         // check if a timestamp had been captured for the packet as well
         bool tsFound = bd->desc.DES0 & ETH_DMARXDESC_TSV;
@@ -388,7 +389,7 @@ void ETHHW_ProcessRx(ETH_TypeDef *eth) {
 
         int ret = ETHHW_ReadCallback(&evt);
         if (ret == ETHHW_RET_RX_PROCESSED) {           // restore RX descriptor
-            SET_BIT(bd->desc.DES0, ETH_DMARXDESC_OWN); // set the OWN bit
+            ETHHW_RestoreRXDesc(bd);
         }
 
         // advance read index
@@ -495,7 +496,7 @@ void ETHHW_ISR(ETH_TypeDef *eth) {
             SET_BIT(eth->DMASR, ETH_DMASR_RS);
             SET_BIT(eth->DMASR, ETH_DMASR_NIS);
 
-            //ETHHW_PrintRingBufStatus(eth, ETHHW_RINGBUF_RX);
+            // ETHHW_PrintRingBufStatus(eth, ETHHW_RINGBUF_RX);
 
             ETHHW_EventDesc evt;
             evt.type = ETHHW_EVT_RX_NOTFY;
@@ -564,11 +565,11 @@ void ETHHW_Transmit(ETH_TypeDef *eth, const uint8_t *buf, uint16_t len, uint8_t 
 #endif
 }
 
-void ETHHW_ReadErrorState(ETH_TypeDef * eth) {
+void ETHHW_ReadErrorState(ETH_TypeDef *eth) {
     MSG("RX CRC error: %u\n RX alignment error: %u\n\n", eth->MMCRFCECR, eth->MMCRFAECR);
 }
 
-void ETHHW_SetLinkProperties(ETH_TypeDef * eth, bool fastEthernet, bool fullDuplex) {
+void ETHHW_SetLinkProperties(ETH_TypeDef *eth, bool fastEthernet, bool fullDuplex) {
     // fetch register content
     uint32_t reg = eth->MACCR;
 
@@ -653,7 +654,7 @@ void ETHHW_EnablePTPTimeStamping(ETH_TypeDef *eth) {
     __IO uint32_t tmpreg = eth->PTPTSCR;
 
     tmpreg |= (0b11 << ETH_PTPTSCR_TSCNT_Pos) | ETH_PTPTSCR_TSSIPV4FE | ETH_PTPTSCR_TSSPTPOEFE | // mimic P2P transparent clock
-              ETH_PTPTSCR_TSPTPPSV2E | ETH_PTPTSCR_TSE | ETH_PTPTSCR_TSSSR; // turn on relevant flags
+              ETH_PTPTSCR_TSPTPPSV2E | ETH_PTPTSCR_TSE | ETH_PTPTSCR_TSSSR;                      // turn on relevant flags
 
     eth->PTPTSCR = tmpreg;
 }
@@ -686,7 +687,7 @@ void ETHHW_InitPTPTime(ETH_TypeDef *eth, uint32_t sec, uint32_t nsec) {
     eth->PTPTSCR = tmpreg;
 }
 
-void ETHHW_GetPTPTime(ETH_TypeDef * eth, uint32_t * sec, uint32_t * nsec) {
+void ETHHW_GetPTPTime(ETH_TypeDef *eth, uint32_t *sec, uint32_t *nsec) {
     *sec = eth->PTPTSHR;
     *nsec = eth->PTPTSLR;
 }

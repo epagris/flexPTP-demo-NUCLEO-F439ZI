@@ -64,12 +64,12 @@
 // - PTP_SERVO_RUN(d): function running the servo, input: master-slave time difference (error), return: clock tuning value in PPB
 //
 
-#include <flexptp/servo/pid_controller.h>
-
-#define PTP_SERVO_INIT() pid_ctrl_init()
-#define PTP_SERVO_DEINIT() pid_ctrl_deinit()
-#define PTP_SERVO_RESET() pid_ctrl_reset()
-#define PTP_SERVO_RUN(d, pscd) pid_ctrl_run(d, pscd)
+#include <flexptp/servo/kalman_filter.h>
+ 
+#define PTP_SERVO_INIT() kalman_filter_init()
+#define PTP_SERVO_DEINIT() kalman_filter_deinit()
+#define PTP_SERVO_RESET() kalman_filter_reset()
+#define PTP_SERVO_RUN(d, pscd) kalman_filter_run(d, pscd)
 
 // Optionally add interactive, tokenizing CLI-support
 // - CLI_REG_CMD(cmd_hintline,n_cmd,n_min_arg,cb): function for registering CLI-commands

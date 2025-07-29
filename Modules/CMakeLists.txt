@@ -41,7 +41,7 @@ elseif(ETH_STACK STREQUAL "LWIP")
     
     target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC ${LWIP_DIR}/src/include ${LWIP_PORT_DIR})
     target_include_directories(lwipcore PUBLIC ${LWIP_DIR}/src/include ${LWIP_PORT_DIR})
-    target_sources(lwipcore PUBLIC ${LWIP_PORT_DIR}/OS/sys_arch.c)
+    target_sources(lwipcore PUBLIC ${LWIP_PORT_DIR}/sys_arch.c)
     #target_sources(${CMAKE_PROJECT_NAME} PUBLIC ${LWIP_PORT_DIR}/OS/sys_arch.c)
 
     target_link_libraries(${CMAKE_PROJECT_NAME} lwipcore)
@@ -58,7 +58,7 @@ elseif(ETH_STACK STREQUAL "LWIP")
 endif()
 
 set(FLEXPTP_NSD ${ETH_STACK})
-set(FLEXPTP_SERVO "PID")
+set(FLEXPTP_SERVO "KALMAN")
 set(FLEXPTP_INCLUDES ${include_dirs} ${LWIP_DIR}/src/include ${LWIP_PORT_DIR}/include)
 set(FLEXPTP_CPU_PARAMS ${cpu_PARAMS})
 set(FLEXPTP_COMPILE_DEFS ${symbols_c_SYMB})
