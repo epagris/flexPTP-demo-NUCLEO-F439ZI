@@ -127,6 +127,14 @@ static void phy_setup_int_LAN8720A() {
     /* uint32_t regVal = 0x2100;
     ETHHW_WritePHYRegister(phyEth, phyAddr, EPHY_BCR, regVal); */
 
+    // LAN8742A on NUCLEO-F4xx may get stuck after reset, so auto-negotiation
+    // never completes (AUTODONE in SCSR stays 0, link falls back to 10M Half).
+    // Force it here: set AUTONEGO_EN (bit 12) and RESTART_AN (bit 9) in BCR.
+    uint32_t bcr;
+    READ(EPHY_BCR, bcr);
+    bcr |= (1u << 12) | (1u << 9);   // AUTONEGO_EN | RESTART_AN
+    WRITE(EPHY_BCR, bcr);
+    
     // enable relevant interrupt sources
     uint32_t regVal = EPHY_LAN8720A_IMR_ANC_INT_EN | EPHY_LAN8720A_IMR_ENERGYON_INT_EN;
     WRITE(EPHY_LAN8720A_IMR, regVal);
@@ -137,11 +145,25 @@ static void phy_fetch_link_status_LAN8720A(PHY_LinkStatus *ls) {
     uint32_t regVal;
     READ(EPHY_LAN8720A_SCSR, regVal);
 
-    // fetch link status flags
-    ls->speed = (regVal & EPHY_LAN8720A_SCSR_100MBPS) ? PHY_LS_100Mbps : PHY_LS_10Mbps;
-    ls->type = (regVal & EPHY_LAN8720A_SCSR_FULL_DUPLEX) ? PHY_LT_FULL_DUPLEX : PHY_LT_HALF_DUPLEX;
+    // Bits [4:2] of SCSR are only meaningful once auto-negotiation has
+    // completed. Before that they may read 0b001 (10M Half) even if the
+    // link is actually 100M Full, which is the root cause of the bug on
+    // NUCLEO-F4xx. So we must gate on AUTODONE first.
+    if (regVal & (1u << 12)) {              // AUTODONE
+        uint32_t spd_dup = (regVal >> 2) & 0x7u;
+        switch (spd_dup) {
+            case 0b110: ls->speed = PHY_LS_100Mbps; ls->type = PHY_LT_FULL_DUPLEX; break;
+            case 0b010: ls->speed = PHY_LS_100Mbps; ls->type = PHY_LT_HALF_DUPLEX; break;
+            case 0b101: ls->speed = PHY_LS_10Mbps;  ls->type = PHY_LT_FULL_DUPLEX; break;
+            case 0b001: ls->speed = PHY_LS_10Mbps;  ls->type = PHY_LT_HALF_DUPLEX; break;
+            default: break;                 // 
+        }
+    }
 
-    // fetch link state
+    // Read BSR twice: LINK_STATUS is debounced and may be transiently wrong
+    // on a single read (especially right after a link change). The datasheet
+    // recommends reading it twice to get a stable value.
+    READ(EPHY_BSR, regVal);
     READ(EPHY_BSR, regVal);
     ls->up = (regVal & EPHY_BSR_LINK_STATUS);
 }
